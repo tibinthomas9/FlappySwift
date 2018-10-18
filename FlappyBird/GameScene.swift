@@ -7,9 +7,34 @@
 //
 
 import SpriteKit
-
-class GameScene: SKScene, SKPhysicsContactDelegate{
-    let verticalPipeGap = 150.0
+protocol GameActionDelegate{
+    func moveUp() -> ()
+    func moveDown() -> ()
+    func changePosition(point:CGPoint) -> ()
+    
+}
+class GameScene: SKScene, SKPhysicsContactDelegate,GameActionDelegate{
+    func moveUp() {
+        if moving.speed > 0  {
+                bird.physicsBody?.velocity = CGVector(dx: 0, dy: 0)
+                bird.physicsBody?.applyImpulse(CGVector(dx: 0, dy: 30))
+        } else if canRestart {
+            self.resetScene()
+        }
+    }
+    func moveDown() {
+        if moving.speed > 0  {
+            bird.physicsBody?.velocity = CGVector(dx: 0, dy: 0)
+            bird.physicsBody?.applyImpulse(CGVector(dx: 0, dy: -10))
+        } else if canRestart {
+            self.resetScene()
+        }
+    }
+    func changePosition(point:CGPoint) {
+        bird.position = point
+    }
+    
+    let verticalPipeGap = 250.0
     
     var bird:SKSpriteNode!
     var skyColor:SKColor!
@@ -28,6 +53,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate{
     let scoreCategory: UInt32 = 1 << 3
     
     override func didMove(to view: SKView) {
+        
+        
         
         canRestart = true
         
@@ -205,14 +232,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate{
         moving.speed = 1
     }
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if moving.speed > 0  {
-            for _ in touches { // do we need all touches?
-                bird.physicsBody?.velocity = CGVector(dx: 0, dy: 0)
-                bird.physicsBody?.applyImpulse(CGVector(dx: 0, dy: 30))
-            }
-        } else if canRestart {
-            self.resetScene()
-        }
+//        if moving.speed > 0  {
+//            for _ in touches { // do we need all touches?
+//                bird.physicsBody?.velocity = CGVector(dx: 0, dy: 0)
+//                bird.physicsBody?.applyImpulse(CGVector(dx: 0, dy: 30))
+//            }
+//        } else if canRestart {
+//            self.resetScene()
+//        }
     }
     
     override func update(_ currentTime: TimeInterval) {
@@ -241,7 +268,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate{
                 // Flash background if contact is detected
                 self.removeAction(forKey: "flash")
                 self.run(SKAction.sequence([SKAction.repeat(SKAction.sequence([SKAction.run({
-                    self.backgroundColor = SKColor(red: 1, green: 0, blue: 0, alpha: 1.0)
+                  //  self.backgroundColor = SKColor(red: 1, green: 0, blue: 0, alpha: 1.0)
                     }),SKAction.wait(forDuration: TimeInterval(0.05)), SKAction.run({
                         self.backgroundColor = self.skyColor
                         }), SKAction.wait(forDuration: TimeInterval(0.05))]), count:4), SKAction.run({

@@ -29,11 +29,12 @@ extension SKNode {
     }
 }
 
-class GameViewController: UIViewController {
-
+class GameViewController: UIHeadGazeViewController {
+    var gameActionDelegate: GameActionDelegate?
+    private var headGazeRecognizer: UIHeadGazeRecognizer? = nil
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        setupGestureRecognizer()
         if let scene = GameScene.unarchiveFromFile("GameScene") as? GameScene {
             // Configure the view.
             let skView = self.view as! SKView
@@ -47,9 +48,40 @@ class GameViewController: UIViewController {
             scene.scaleMode = .aspectFill
             
             skView.presentScene(scene)
+            self.gameActionDelegate = scene
         }
     }
-
+    private func setupGestureRecognizer() {
+        
+        // add head gaze recognizer to handle head gaze event
+        self.headGazeRecognizer = UIHeadGazeRecognizer()
+        
+        //Between [0,9]. Stablize the cursor reducing the wiggling noise.
+        //The higher the value the more smoothly the cursor moves.
+        super.virtualCursorView?.smoothness = 9
+        
+        super.virtualCursorView?.addGestureRecognizer(headGazeRecognizer)
+        self.headGazeRecognizer?.move = { [weak self] gaze in
+            
+            self?.buttonAction(gaze: gaze)
+            
+        }
+    }
+    private func buttonAction( gaze: UIHeadGaze){
+        if let delegate = gameActionDelegate{
+            let skView = self.view as! SKView
+            let scene = skView.scene
+            //delegate.changePosition(point: (gaze.location(in: scene!)))
+            let change = gaze.location(in: view).y - gaze.previousLocation(in: view).y
+            if (change < -2  && gaze.evenType == .glance){
+               delegate.moveUp()
+            }
+            else if (change > 2 && gaze.evenType == .glance){
+                delegate.moveDown()
+            }
+        }
+        
+    }
     override var shouldAutorotate : Bool {
         return true
     }
